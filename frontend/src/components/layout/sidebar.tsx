@@ -9,12 +9,14 @@ import {
   Users,
   Settings,
   LogOut,
+  Columns3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Kanban', href: '/kanban', icon: Columns3 },
   { name: 'Projects', href: '/projects', icon: FolderKanban },
   { name: 'Tasks', href: '/tasks', icon: CheckSquare },
   { name: 'Teams', href: '/teams', icon: Users },
