@@ -9,6 +9,7 @@ import type {
   TeamMember,
   Milestone,
   ActivityLog,
+  TimeLog,
 } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
@@ -156,6 +157,30 @@ export const activityApi = {
     const { data } = await api.get<ApiResponse<ActivityLog[]>>(`/projects/${projectId}/activities`, {
       params: { limit },
     });
+    return data;
+  },
+};
+
+// Time Logs
+export const timeLogsApi = {
+  list: async (params?: { task_id?: string; user_id?: string; start_date?: string; end_date?: string }) => {
+    const { data } = await api.get<ApiResponse<TimeLog[]>>('/time-logs', { params });
+    return data;
+  },
+  getByTask: async (taskId: string) => {
+    const { data } = await api.get<ApiResponse<TimeLog[]>>(`/tasks/${taskId}/time-logs`);
+    return data;
+  },
+  create: async (timeLog: { task_id: string; hours: number; date: string; description?: string }) => {
+    const { data } = await api.post<ApiResponse<TimeLog>>('/time-logs', timeLog);
+    return data;
+  },
+  update: async (id: string, timeLog: Partial<TimeLog>) => {
+    const { data } = await api.put<ApiResponse<TimeLog>>(`/time-logs/${id}`, timeLog);
+    return data;
+  },
+  delete: async (id: string) => {
+    const { data } = await api.delete<ApiResponse<void>>(`/time-logs/${id}`);
     return data;
   },
 };

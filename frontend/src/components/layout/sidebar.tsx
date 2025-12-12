@@ -11,6 +11,7 @@ import {
   LogOut,
   Columns3,
   Activity,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Kanban', href: '/kanban', icon: Columns3 },
   { name: 'Projects', href: '/projects', icon: FolderKanban },
   { name: 'Tasks', href: '/tasks', icon: CheckSquare },
+  { name: 'Timesheet', href: '/timesheet', icon: Clock },
   { name: 'Teams', href: '/teams', icon: Users },
   { name: 'Activity', href: '/activity', icon: Activity },
   { name: 'Settings', href: '/settings', icon: Settings },
