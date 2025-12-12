@@ -85,6 +85,20 @@ export interface Milestone {
   updated_at: string;
 }
 
+// Time Log
+export interface TimeLog {
+  id: string;
+  task_id: string;
+  user_id: string;
+  user_name?: string;
+  task_name?: string;
+  project_name?: string;
+  description?: string;
+  hours: number;
+  date: string;
+  created_at: string;
+}
+
 // Activity Log
 export type ActivityAction =
   | 'created'
