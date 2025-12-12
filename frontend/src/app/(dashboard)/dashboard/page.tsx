@@ -11,6 +11,18 @@ import {
   AlertTriangle,
   ArrowRight,
 } from 'lucide-react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -79,6 +91,30 @@ export default function DashboardPage() {
     ).length,
     totalTeams: teams.length,
   };
+
+  // Chart data preparation
+  const projectStatusData = [
+    { name: 'Planning', value: projects.filter((p) => p.status === 'Planning').length, color: '#9CA3AF' },
+    { name: 'Active', value: projects.filter((p) => p.status === 'Active').length, color: '#10B981' },
+    { name: 'On Hold', value: projects.filter((p) => p.status === 'OnHold').length, color: '#F59E0B' },
+    { name: 'Completed', value: projects.filter((p) => p.status === 'Completed').length, color: '#3B82F6' },
+    { name: 'Cancelled', value: projects.filter((p) => p.status === 'Cancelled').length, color: '#EF4444' },
+  ].filter((item) => item.value > 0);
+
+  const taskStatusData = [
+    { name: 'To Do', value: tasks.filter((t) => t.status === 'Todo').length, color: '#9CA3AF' },
+    { name: 'In Progress', value: tasks.filter((t) => t.status === 'inprogress').length, color: '#3B82F6' },
+    { name: 'Review', value: tasks.filter((t) => t.status === 'Review').length, color: '#8B5CF6' },
+    { name: 'Done', value: tasks.filter((t) => t.status === 'Done').length, color: '#10B981' },
+    { name: 'Blocked', value: tasks.filter((t) => t.status === 'Blocked').length, color: '#EF4444' },
+  ].filter((item) => item.value > 0);
+
+  const taskPriorityData = [
+    { name: 'Low', value: tasks.filter((t) => t.priority === 'Low').length },
+    { name: 'Medium', value: tasks.filter((t) => t.priority === 'Medium').length },
+    { name: 'High', value: tasks.filter((t) => t.priority === 'High').length },
+    { name: 'Critical', value: tasks.filter((t) => t.priority === 'Critical').length },
+  ];
 
   const recentProjects = projects.slice(0, 5);
   const urgentTasks = tasks
@@ -171,6 +207,94 @@ export default function DashboardPage() {
                   <AlertTriangle className="h-6 w-6 text-red-600" />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Project Status Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Project Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {projectStatusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={projectStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={70}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {projectStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-gray-500 text-sm">
+                  No project data
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Task Status Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Task Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {taskStatusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={taskStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={70}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {taskStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-gray-500 text-sm">
+                  No task data
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Task Priority Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Tasks by Priority</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={taskPriorityData}>
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
