@@ -147,6 +147,51 @@ impl ProjectRepository for PgProjectRepository {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
+    async fn find_accessible_by_user(&self, user_id: Uuid) -> Result<Vec<Project>, DomainError> {
+        let rows = sqlx::query_as::<_, ProjectRow>(
+            r#"
+            SELECT DISTINCT p.* FROM projects p
+            LEFT JOIN project_members pm ON p.id = pm.project_id
+            WHERE p.owner_id = $1 OR pm.user_id = $1
+            ORDER BY p.created_at DESC
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    async fn can_user_access(&self, project_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        let result: Option<(i64,)> = sqlx::query_as(
+            r#"
+            SELECT 1 FROM projects p
+            LEFT JOIN project_members pm ON p.id = pm.project_id
+            WHERE p.id = $1 AND (p.owner_id = $2 OR pm.user_id = $2)
+            LIMIT 1
+            "#,
+        )
+        .bind(project_id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.is_some())
+    }
+
+    async fn is_owner(&self, project_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        let result: Option<(i64,)> = sqlx::query_as(
+            "SELECT 1 FROM projects WHERE id = $1 AND owner_id = $2 LIMIT 1",
+        )
+        .bind(project_id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.is_some())
+    }
+
     async fn create(&self, project: &Project) -> Result<Project, DomainError> {
         let row = sqlx::query_as::<_, ProjectRow>(
             r#"

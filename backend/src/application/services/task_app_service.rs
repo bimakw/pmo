@@ -19,6 +19,26 @@ impl TaskAppService {
         self.task_repository.find_all().await
     }
 
+    /// List tasks from projects user can access (owner OR member)
+    pub async fn list_accessible_tasks(&self, user_id: Uuid) -> Result<Vec<Task>, DomainError> {
+        self.task_repository.find_accessible_by_user(user_id).await
+    }
+
+    /// Check if user can access task (via project access)
+    pub async fn can_user_access(&self, task_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        self.task_repository.can_user_access(task_id, user_id).await
+    }
+
+    /// Check if user is owner of the project containing the task
+    pub async fn is_project_owner(&self, task_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        self.task_repository.is_project_owner(task_id, user_id).await
+    }
+
+    /// Check if user can access project (for create task)
+    pub async fn can_access_project(&self, project_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        self.task_repository.can_access_project(project_id, user_id).await
+    }
+
     pub async fn get_task(&self, id: Uuid) -> Result<Task, DomainError> {
         self.task_repository
             .find_by_id(id)

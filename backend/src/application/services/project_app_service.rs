@@ -15,8 +15,24 @@ impl ProjectAppService {
         Self { project_repository }
     }
 
+    /// List all projects (admin only - use list_accessible_projects for regular users)
     pub async fn list_projects(&self) -> Result<Vec<Project>, DomainError> {
         self.project_repository.find_all().await
+    }
+
+    /// List projects accessible by user (owner OR member)
+    pub async fn list_accessible_projects(&self, user_id: Uuid) -> Result<Vec<Project>, DomainError> {
+        self.project_repository.find_accessible_by_user(user_id).await
+    }
+
+    /// Check if user can access project
+    pub async fn can_user_access(&self, project_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        self.project_repository.can_user_access(project_id, user_id).await
+    }
+
+    /// Check if user is owner of project
+    pub async fn is_owner(&self, project_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        self.project_repository.is_owner(project_id, user_id).await
     }
 
     pub async fn get_project(&self, id: Uuid) -> Result<Project, DomainError> {
