@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.83-bookworm AS builder
+FROM rust:1.84-bookworm AS builder
 
 WORKDIR /app
 
@@ -29,8 +29,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/target/release/pmo-backend /app/pmo-backend
+COPY --from=builder /app/target/release/percival-backend /app/percival-backend
 
 EXPOSE 8080
 
-CMD ["./pmo-backend"]
+CMD ["./percival-backend"]

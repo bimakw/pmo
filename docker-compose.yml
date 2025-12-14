@@ -12,7 +12,7 @@ services:
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     ports:
-      - "5432:5432"
+      - "12432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -31,8 +31,9 @@ services:
       JWT_SECRET: change-this-secret-in-production
       JWT_EXPIRATION: 86400
       RUST_LOG: info
+      ALLOWED_ORIGINS: http://localhost:12300
     ports:
-      - "8080:8080"
+      - "12380:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -42,11 +43,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:12380/api/v1
     container_name: percival-frontend
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
     ports:
-      - "3000:3000"
+      - "12300:3000"
     depends_on:
       - backend
 
