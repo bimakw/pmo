@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { projectsApi } from '@/lib/api';
+import { projectsApi, activityApi } from '@/lib/api';
 import type { Project, ActivityLog, ActivityAction, EntityType } from '@/types';
 import {
   Activity,
@@ -20,72 +20,6 @@ import {
   Filter,
   ChevronDown,
 } from 'lucide-react';
-
-// Mock data for demonstration (replace with real API when backend is ready)
-const mockActivities: ActivityLog[] = [
-  {
-    id: '1',
-    user_name: 'John Doe',
-    project_name: 'Website Redesign',
-    action: 'created',
-    entity_type: 'task',
-    entity_id: 't1',
-    entity_name: 'Update homepage layout',
-    created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-  },
-  {
-    id: '2',
-    user_name: 'Jane Smith',
-    project_name: 'Mobile App',
-    action: 'status_changed',
-    entity_type: 'task',
-    entity_id: 't2',
-    entity_name: 'Implement login screen',
-    details: { from: 'inprogress', to: 'review' },
-    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-  },
-  {
-    id: '3',
-    user_name: 'Bob Wilson',
-    project_name: 'Website Redesign',
-    action: 'commented',
-    entity_type: 'task',
-    entity_id: 't3',
-    entity_name: 'Fix navigation bug',
-    created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-  },
-  {
-    id: '4',
-    user_name: 'Alice Brown',
-    project_name: 'API Development',
-    action: 'assigned',
-    entity_type: 'task',
-    entity_id: 't4',
-    entity_name: 'Create user endpoints',
-    details: { assignee: 'Bob Wilson' },
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: '5',
-    user_name: 'John Doe',
-    project_name: 'Website Redesign',
-    action: 'created',
-    entity_type: 'project',
-    entity_id: 'p1',
-    entity_name: 'Website Redesign',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: '6',
-    user_name: 'Jane Smith',
-    project_name: 'Mobile App',
-    action: 'updated',
-    entity_type: 'milestone',
-    entity_id: 'm1',
-    entity_name: 'Phase 1 Complete',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-  },
-];
 
 const actionIcons: Record<ActivityAction, typeof Plus> = {
   created: Plus,
@@ -190,35 +124,45 @@ function ActivityItem({ activity }: ActivityItemProps) {
 }
 
 export default function ActivityPage() {
-  const [activities, setActivities] = useState<ActivityLog[]>(mockActivities);
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<string>('all');
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
 
   useEffect(() => {
-    loadData();
+    loadProjects();
   }, []);
 
-  const loadData = async () => {
+  useEffect(() => {
+    loadActivities();
+  }, [selectedProjectId]);
+
+  const loadProjects = async () => {
     try {
       const projectsRes = await projectsApi.list();
       if (projectsRes.data) setProjects(projectsRes.data);
-
-      // TODO: Replace with real API call when backend is ready
-      // const activitiesRes = await activityApi.list();
-      // if (activitiesRes.data) setActivities(activitiesRes.data);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      console.error('Failed to load projects:', error);
+    }
+  };
+
+  const loadActivities = async () => {
+    setLoading(true);
+    try {
+      const params = selectedProjectId ? { project_id: selectedProjectId } : undefined;
+      const activitiesRes = await activityApi.list(params);
+      if (activitiesRes.data) setActivities(activitiesRes.data);
+    } catch (error) {
+      console.error('Failed to load activities:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredActivities =
-    selectedProject === 'all'
-      ? activities
-      : activities.filter((a) => a.project_name === selectedProject);
+  // Activities are already filtered by project_id from API
+  const filteredActivities = activities;
 
   // Group activities by date
   const groupedActivities = filteredActivities.reduce((groups, activity) => {
@@ -285,6 +229,7 @@ export default function ActivityPage() {
                   <button
                     onClick={() => {
                       setSelectedProject('all');
+                      setSelectedProjectId(null);
                       setShowProjectDropdown(false);
                     }}
                     className={`w-full text-left px-4 py-2 hover:bg-gray-50 text-sm ${
@@ -298,10 +243,11 @@ export default function ActivityPage() {
                       key={project.id}
                       onClick={() => {
                         setSelectedProject(project.name);
+                        setSelectedProjectId(project.id);
                         setShowProjectDropdown(false);
                       }}
                       className={`w-full text-left px-4 py-2 hover:bg-gray-50 text-sm ${
-                        selectedProject === project.name ? 'bg-blue-50 text-blue-600' : ''
+                        selectedProjectId === project.id ? 'bg-blue-50 text-blue-600' : ''
                       }`}
                     >
                       {project.name}
