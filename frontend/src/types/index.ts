@@ -99,6 +99,23 @@ export interface TimeLog {
   created_at: string;
 }
 
+// Tag types
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskTag {
+  id: string;
+  task_id: string;
+  tag_id: string;
+  created_at: string;
+}
+
 // Activity Log
 export type ActivityAction =
   | 'created'
