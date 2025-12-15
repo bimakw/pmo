@@ -1,4 +1,5 @@
 mod activity_log;
+mod attachment;
 mod milestone;
 mod project;
 mod tag;
@@ -8,6 +9,7 @@ mod time_log;
 mod user;
 
 pub use activity_log::{ActivityLog, ActivityLogWithDetails};
+pub use attachment::Attachment;
 pub use milestone::Milestone;
 pub use project::{Project, ProjectMember};
 pub use tag::{Tag, TaskTag};

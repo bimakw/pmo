@@ -3,7 +3,7 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
-use std::{sync::Arc, time::Duration};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 use tower_http::cors::{AllowHeaders, AllowMethods, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -14,13 +14,13 @@ mod infrastructure;
 mod presentation;
 mod shared;
 
-use application::services::{ActivityAppService, AuthAppService, ProjectAppService, TagAppService, TaskAppService, TeamAppService, TimeLogAppService};
+use application::services::{ActivityAppService, AttachmentAppService, AuthAppService, ProjectAppService, TagAppService, TaskAppService, TeamAppService, TimeLogAppService};
 use infrastructure::{
     config::AppConfig,
     database,
-    persistence::{PgActivityLogRepository, PgProjectRepository, PgTagRepository, PgTaskRepository, PgTeamRepository, PgTimeLogRepository, PgUserRepository},
+    persistence::{PgActivityLogRepository, PgAttachmentRepository, PgProjectRepository, PgTagRepository, PgTaskRepository, PgTeamRepository, PgTimeLogRepository, PgUserRepository},
 };
-use presentation::handlers::{activity_handler, auth_handler, project_handler, tag_handler, task_handler, team_handler, time_log_handler};
+use presentation::handlers::{activity_handler, attachment_handler, auth_handler, project_handler, tag_handler, task_handler, team_handler, time_log_handler};
 use presentation::middleware::auth_middleware;
 
 #[tokio::main]
@@ -50,6 +50,15 @@ async fn main() {
     let activity_repository = Arc::new(PgActivityLogRepository::new(pool.clone()));
     let time_log_repository = Arc::new(PgTimeLogRepository::new(pool.clone()));
     let tag_repository = Arc::new(PgTagRepository::new(pool.clone()));
+    let attachment_repository = Arc::new(PgAttachmentRepository::new(pool.clone()));
+
+    // Setup upload directory
+    let upload_dir = PathBuf::from(
+        std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "./uploads".to_string()),
+    );
+    tokio::fs::create_dir_all(&upload_dir)
+        .await
+        .expect("Failed to create upload directory");
 
     // Create application services
     let auth_service = Arc::new(AuthAppService::new(
@@ -63,6 +72,7 @@ async fn main() {
     let activity_service = Arc::new(ActivityAppService::new(activity_repository));
     let time_log_service = Arc::new(TimeLogAppService::new(time_log_repository));
     let tag_service = Arc::new(TagAppService::new(tag_repository));
+    let attachment_service = Arc::new(AttachmentAppService::new(attachment_repository, upload_dir));
 
     // CORS configuration - restrict to allowed origins
     let cors = CorsLayer::new()
@@ -88,7 +98,7 @@ async fn main() {
         .route("/health", get(health_check))
         .nest(
             "/api/v1",
-            api_routes(auth_service, project_service, task_service, team_service, activity_service, time_log_service, tag_service),
+            api_routes(auth_service, project_service, task_service, team_service, activity_service, time_log_service, tag_service, attachment_service),
         )
         .layer(cors)
         .layer(TraceLayer::new_for_http());
@@ -114,6 +124,7 @@ fn api_routes(
     activity_service: Arc<ActivityAppService>,
     time_log_service: Arc<TimeLogAppService>,
     tag_service: Arc<TagAppService>,
+    attachment_service: Arc<AttachmentAppService>,
 ) -> Router {
     // Public auth routes (no authentication required)
     let public_auth_routes = Router::new()
@@ -193,6 +204,15 @@ fn api_routes(
         .layer(middleware::from_fn(auth_middleware))
         .with_state(tag_service);
 
+    // Protected attachment routes
+    let attachment_routes = Router::new()
+        .route("/tasks/{task_id}/attachments", get(attachment_handler::get_task_attachments))
+        .route("/tasks/{task_id}/attachments", post(attachment_handler::upload_attachment))
+        .route("/attachments/{id}", get(attachment_handler::download_attachment))
+        .route("/attachments/{id}", delete(attachment_handler::delete_attachment))
+        .layer(middleware::from_fn(auth_middleware))
+        .with_state(attachment_service);
+
     Router::new()
         .merge(public_auth_routes)
         .merge(project_routes)
@@ -201,4 +221,5 @@ fn api_routes(
         .merge(activity_routes)
         .merge(time_log_routes)
         .merge(tag_routes)
+        .merge(attachment_routes)
 }

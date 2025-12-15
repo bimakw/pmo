@@ -128,30 +128,6 @@ CREATE TABLE task_comments (
 
 CREATE INDEX idx_task_comments_task ON task_comments(task_id);
 
--- ==================== TAGS TABLE ====================
-CREATE TABLE tags (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(50) NOT NULL UNIQUE,
-    color VARCHAR(7) NOT NULL DEFAULT '#6b7280',
-    description TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_tags_name ON tags(name);
-
--- ==================== TASK TAGS TABLE ====================
-CREATE TABLE task_tags (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-    tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(task_id, tag_id)
-);
-
-CREATE INDEX idx_task_tags_task ON task_tags(task_id);
-CREATE INDEX idx_task_tags_tag ON task_tags(tag_id);
-
 -- ==================== ACTIVITY LOG TABLE ====================
 CREATE TABLE activity_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -196,5 +172,64 @@ CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
 CREATE TRIGGER update_task_comments_updated_at BEFORE UPDATE ON task_comments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- ==================== TIME LOGS TABLE ====================
+CREATE TABLE time_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    hours REAL NOT NULL,
+    date DATE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_time_logs_task ON time_logs(task_id);
+CREATE INDEX idx_time_logs_user ON time_logs(user_id);
+CREATE INDEX idx_time_logs_date ON time_logs(date);
+
+CREATE TRIGGER update_time_logs_updated_at BEFORE UPDATE ON time_logs
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ==================== TAGS TABLE ====================
+CREATE TABLE tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    color VARCHAR(7) NOT NULL DEFAULT '#6B7280',
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_tags_name ON tags(name);
+
 CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ==================== TASK TAGS TABLE ====================
+CREATE TABLE task_tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(task_id, tag_id)
+);
+
+CREATE INDEX idx_task_tags_task ON task_tags(task_id);
+CREATE INDEX idx_task_tags_tag ON task_tags(tag_id);
+
+-- ==================== ATTACHMENTS TABLE ====================
+CREATE TABLE attachments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    uploaded_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    filename VARCHAR(255) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    content_type VARCHAR(100) NOT NULL,
+    size_bytes BIGINT NOT NULL,
+    storage_path TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_attachments_task ON attachments(task_id);
+CREATE INDEX idx_attachments_uploaded_by ON attachments(uploaded_by);

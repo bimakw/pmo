@@ -11,7 +11,7 @@ import type {
   ActivityLog,
   TimeLog,
   Tag,
-  TaskTag,
+  Attachment,
 } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
@@ -197,11 +197,11 @@ export const tagsApi = {
     const { data } = await api.get<ApiResponse<Tag>>(`/tags/${id}`);
     return data;
   },
-  create: async (tag: { name: string; color?: string; description?: string }) => {
+  create: async (tag: { name: string; color: string; description?: string }) => {
     const { data } = await api.post<ApiResponse<Tag>>('/tags', tag);
     return data;
   },
-  update: async (id: string, tag: { name?: string; color?: string; description?: string }) => {
+  update: async (id: string, tag: Partial<Tag>) => {
     const { data } = await api.put<ApiResponse<Tag>>(`/tags/${id}`, tag);
     return data;
   },
@@ -209,7 +209,6 @@ export const tagsApi = {
     const { data } = await api.delete<ApiResponse<void>>(`/tags/${id}`);
     return data;
   },
-  // Task-Tag operations
   getTaskTags: async (taskId: string) => {
     const { data } = await api.get<ApiResponse<Tag[]>>(`/tasks/${taskId}/tags`);
     return data;
@@ -219,11 +218,36 @@ export const tagsApi = {
     return data;
   },
   addTagToTask: async (taskId: string, tagId: string) => {
-    const { data } = await api.post<ApiResponse<TaskTag>>(`/tasks/${taskId}/tags/${tagId}`);
+    const { data } = await api.post<ApiResponse<void>>(`/tasks/${taskId}/tags/${tagId}`);
     return data;
   },
   removeTagFromTask: async (taskId: string, tagId: string) => {
     const { data } = await api.delete<ApiResponse<void>>(`/tasks/${taskId}/tags/${tagId}`);
+    return data;
+  },
+};
+
+// Attachments
+export const attachmentsApi = {
+  getByTask: async (taskId: string) => {
+    const { data } = await api.get<ApiResponse<Attachment[]>>(`/tasks/${taskId}/attachments`);
+    return data;
+  },
+  upload: async (taskId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await api.post<ApiResponse<Attachment>>(`/tasks/${taskId}/attachments`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return data;
+  },
+  download: (id: string) => {
+    return `${API_URL}/attachments/${id}`;
+  },
+  delete: async (id: string) => {
+    const { data } = await api.delete<ApiResponse<void>>(`/attachments/${id}`);
     return data;
   },
 };

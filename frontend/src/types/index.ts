@@ -99,20 +99,16 @@ export interface TimeLog {
   created_at: string;
 }
 
-// Tag types
-export interface Tag {
-  id: string;
-  name: string;
-  color: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TaskTag {
+// Attachment types
+export interface Attachment {
   id: string;
   task_id: string;
-  tag_id: string;
+  uploaded_by: string;
+  filename: string;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  storage_path: string;
   created_at: string;
 }
 
@@ -138,6 +134,23 @@ export interface ActivityLog {
   entity_id: string;
   entity_name?: string;
   details?: Record<string, unknown>;
+  created_at: string;
+}
+
+// Tag types
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskTag {
+  id: string;
+  task_id: string;
+  tag_id: string;
   created_at: string;
 }
 
