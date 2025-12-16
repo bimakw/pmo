@@ -1,12 +1,12 @@
 -- PMO Database Seed Data
 -- Sample data for development and testing
 
--- Insert sample users (password: "password123" hashed with argon2)
+-- Insert sample users (password: "Password123" hashed with argon2)
 INSERT INTO users (id, email, password_hash, name, role) VALUES
-    ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'admin@pmo.local', '$argon2id$v=19$m=19456,t=2,p=1$placeholder_hash_admin', 'Admin User', 'admin'),
-    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'manager@pmo.local', '$argon2id$v=19$m=19456,t=2,p=1$placeholder_hash_manager', 'Project Manager', 'manager'),
-    ('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'dev1@pmo.local', '$argon2id$v=19$m=19456,t=2,p=1$placeholder_hash_dev1', 'Developer One', 'member'),
-    ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'dev2@pmo.local', '$argon2id$v=19$m=19456,t=2,p=1$placeholder_hash_dev2', 'Developer Two', 'member');
+    ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'admin@pmo.local', '$argon2id$v=19$m=65536,t=3,p=4$rZntpJ3B2Ac4ahee3G/a9w$WXBcSo0oX3mY8h23fmIYF6KKHSRNhD51VDV9MqMuwF8', 'Admin User', 'admin'),
+    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'manager@pmo.local', '$argon2id$v=19$m=65536,t=3,p=4$rZntpJ3B2Ac4ahee3G/a9w$WXBcSo0oX3mY8h23fmIYF6KKHSRNhD51VDV9MqMuwF8', 'Project Manager', 'manager'),
+    ('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'dev1@pmo.local', '$argon2id$v=19$m=65536,t=3,p=4$rZntpJ3B2Ac4ahee3G/a9w$WXBcSo0oX3mY8h23fmIYF6KKHSRNhD51VDV9MqMuwF8', 'Developer One', 'member'),
+    ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'dev2@pmo.local', '$argon2id$v=19$m=65536,t=3,p=4$rZntpJ3B2Ac4ahee3G/a9w$WXBcSo0oX3mY8h23fmIYF6KKHSRNhD51VDV9MqMuwF8', 'Developer Two', 'member');
 
 -- Insert sample teams
 INSERT INTO teams (id, name, description, lead_id) VALUES
