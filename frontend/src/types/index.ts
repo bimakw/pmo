@@ -154,6 +154,27 @@ export interface TaskTag {
   created_at: string;
 }
 
+// Notification types
+export type NotificationType =
+  | 'task_assigned'
+  | 'task_updated'
+  | 'task_completed'
+  | 'task_due_soon'
+  | 'project_updated'
+  | 'comment_added'
+  | 'mention';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  link?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 // API Response
 export interface ApiResponse<T> {
   success: boolean;

@@ -12,6 +12,7 @@ import type {
   TimeLog,
   Tag,
   Attachment,
+  Notification,
 } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
@@ -248,6 +249,30 @@ export const attachmentsApi = {
   },
   delete: async (id: string) => {
     const { data } = await api.delete<ApiResponse<void>>(`/attachments/${id}`);
+    return data;
+  },
+};
+
+// Notifications
+export const notificationsApi = {
+  list: async () => {
+    const { data } = await api.get<ApiResponse<Notification[]>>('/notifications');
+    return data;
+  },
+  getUnreadCount: async () => {
+    const { data } = await api.get<ApiResponse<{ count: number }>>('/notifications/unread-count');
+    return data;
+  },
+  markAsRead: async (id: string) => {
+    const { data } = await api.put<ApiResponse<void>>(`/notifications/${id}/read`);
+    return data;
+  },
+  markAllAsRead: async () => {
+    const { data } = await api.put<ApiResponse<void>>('/notifications/read-all');
+    return data;
+  },
+  delete: async (id: string) => {
+    const { data } = await api.delete<ApiResponse<void>>(`/notifications/${id}`);
     return data;
   },
 };

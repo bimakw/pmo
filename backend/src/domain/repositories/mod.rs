@@ -1,5 +1,6 @@
 mod activity_log_repository;
 mod attachment_repository;
+mod notification_repository;
 mod project_repository;
 mod tag_repository;
 mod task_repository;
@@ -9,6 +10,7 @@ mod user_repository;
 
 pub use activity_log_repository::ActivityLogRepository;
 pub use attachment_repository::AttachmentRepository;
+pub use notification_repository::NotificationRepository;
 pub use project_repository::ProjectRepository;
 pub use tag_repository::TagRepository;
 pub use task_repository::TaskRepository;

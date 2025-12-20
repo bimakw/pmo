@@ -14,13 +14,13 @@ mod infrastructure;
 mod presentation;
 mod shared;
 
-use application::services::{ActivityAppService, AttachmentAppService, AuthAppService, ProjectAppService, TagAppService, TaskAppService, TeamAppService, TimeLogAppService};
+use application::services::{ActivityAppService, AttachmentAppService, AuthAppService, NotificationAppService, ProjectAppService, TagAppService, TaskAppService, TeamAppService, TimeLogAppService};
 use infrastructure::{
     config::AppConfig,
     database,
-    persistence::{PgActivityLogRepository, PgAttachmentRepository, PgProjectRepository, PgTagRepository, PgTaskRepository, PgTeamRepository, PgTimeLogRepository, PgUserRepository},
+    persistence::{PgActivityLogRepository, PgAttachmentRepository, PgNotificationRepository, PgProjectRepository, PgTagRepository, PgTaskRepository, PgTeamRepository, PgTimeLogRepository, PgUserRepository},
 };
-use presentation::handlers::{activity_handler, attachment_handler, auth_handler, project_handler, tag_handler, task_handler, team_handler, time_log_handler};
+use presentation::handlers::{activity_handler, attachment_handler, auth_handler, notification_handler, project_handler, tag_handler, task_handler, team_handler, time_log_handler};
 use presentation::middleware::auth_middleware;
 
 #[tokio::main]
@@ -51,6 +51,7 @@ async fn main() {
     let time_log_repository = Arc::new(PgTimeLogRepository::new(pool.clone()));
     let tag_repository = Arc::new(PgTagRepository::new(pool.clone()));
     let attachment_repository = Arc::new(PgAttachmentRepository::new(pool.clone()));
+    let notification_repository = Arc::new(PgNotificationRepository::new(pool.clone()));
 
     // Setup upload directory
     let upload_dir = PathBuf::from(
@@ -73,6 +74,7 @@ async fn main() {
     let time_log_service = Arc::new(TimeLogAppService::new(time_log_repository));
     let tag_service = Arc::new(TagAppService::new(tag_repository));
     let attachment_service = Arc::new(AttachmentAppService::new(attachment_repository, upload_dir));
+    let notification_service = Arc::new(NotificationAppService::new(notification_repository));
 
     // CORS configuration - restrict to allowed origins
     let cors = CorsLayer::new()
@@ -98,7 +100,7 @@ async fn main() {
         .route("/health", get(health_check))
         .nest(
             "/api/v1",
-            api_routes(auth_service, project_service, task_service, team_service, activity_service, time_log_service, tag_service, attachment_service),
+            api_routes(auth_service, project_service, task_service, team_service, activity_service, time_log_service, tag_service, attachment_service, notification_service),
         )
         .layer(cors)
         .layer(TraceLayer::new_for_http());
@@ -125,6 +127,7 @@ fn api_routes(
     time_log_service: Arc<TimeLogAppService>,
     tag_service: Arc<TagAppService>,
     attachment_service: Arc<AttachmentAppService>,
+    notification_service: Arc<NotificationAppService>,
 ) -> Router {
     // Public auth routes (no authentication required)
     let public_auth_routes = Router::new()
@@ -213,6 +216,16 @@ fn api_routes(
         .layer(middleware::from_fn(auth_middleware))
         .with_state(attachment_service);
 
+    // Protected notification routes
+    let notification_routes = Router::new()
+        .route("/notifications", get(notification_handler::list_notifications))
+        .route("/notifications/unread-count", get(notification_handler::get_unread_count))
+        .route("/notifications/{id}/read", put(notification_handler::mark_as_read))
+        .route("/notifications/read-all", put(notification_handler::mark_all_as_read))
+        .route("/notifications/{id}", delete(notification_handler::delete_notification))
+        .layer(middleware::from_fn(auth_middleware))
+        .with_state(notification_service);
+
     Router::new()
         .merge(public_auth_routes)
         .merge(project_routes)
@@ -222,4 +235,5 @@ fn api_routes(
         .merge(time_log_routes)
         .merge(tag_routes)
         .merge(attachment_routes)
+        .merge(notification_routes)
 }

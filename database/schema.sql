@@ -233,3 +233,29 @@ CREATE TABLE attachments (
 
 CREATE INDEX idx_attachments_task ON attachments(task_id);
 CREATE INDEX idx_attachments_uploaded_by ON attachments(uploaded_by);
+
+-- ==================== NOTIFICATIONS TABLE ====================
+CREATE TYPE notification_type AS ENUM (
+    'task_assigned',
+    'task_updated',
+    'task_completed',
+    'task_due_soon',
+    'project_updated',
+    'comment_added',
+    'mention'
+);
+
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    notification_type notification_type NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    link TEXT,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read) WHERE is_read = false;
+CREATE INDEX idx_notifications_created ON notifications(created_at DESC);

@@ -13,6 +13,7 @@ import {
   Activity,
   Clock,
   Tags,
+  Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Timesheet', href: '/timesheet', icon: Clock },
   { name: 'Teams', href: '/teams', icon: Users },
   { name: 'Activity', href: '/activity', icon: Activity },
+  { name: 'Notifications', href: '/notifications', icon: Bell },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
