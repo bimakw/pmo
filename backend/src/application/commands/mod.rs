@@ -95,3 +95,23 @@ pub struct LoginCommand {
     pub email: String,
     pub password: String,
 }
+
+// ==================== TAG COMMANDS ====================
+#[derive(Debug, Deserialize)]
+pub struct CreateTagCommand {
+    pub name: String,
+    pub color: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTagCommand {
+    pub name: Option<String>,
+    pub color: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SetTaskTagsCommand {
+    pub tag_ids: Vec<Uuid>,
+}

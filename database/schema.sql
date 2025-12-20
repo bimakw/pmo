@@ -128,6 +128,30 @@ CREATE TABLE task_comments (
 
 CREATE INDEX idx_task_comments_task ON task_comments(task_id);
 
+-- ==================== TAGS TABLE ====================
+CREATE TABLE tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(50) NOT NULL UNIQUE,
+    color VARCHAR(7) NOT NULL DEFAULT '#6b7280',
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_tags_name ON tags(name);
+
+-- ==================== TASK TAGS TABLE ====================
+CREATE TABLE task_tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(task_id, tag_id)
+);
+
+CREATE INDEX idx_task_tags_task ON task_tags(task_id);
+CREATE INDEX idx_task_tags_tag ON task_tags(tag_id);
+
 -- ==================== ACTIVITY LOG TABLE ====================
 CREATE TABLE activity_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -170,4 +194,7 @@ CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_task_comments_updated_at BEFORE UPDATE ON task_comments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

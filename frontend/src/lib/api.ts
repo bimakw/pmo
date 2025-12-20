@@ -10,6 +10,8 @@ import type {
   Milestone,
   ActivityLog,
   TimeLog,
+  Tag,
+  TaskTag,
 } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
@@ -181,6 +183,47 @@ export const timeLogsApi = {
   },
   delete: async (id: string) => {
     const { data } = await api.delete<ApiResponse<void>>(`/time-logs/${id}`);
+    return data;
+  },
+};
+
+// Tags
+export const tagsApi = {
+  list: async () => {
+    const { data } = await api.get<ApiResponse<Tag[]>>('/tags');
+    return data;
+  },
+  get: async (id: string) => {
+    const { data } = await api.get<ApiResponse<Tag>>(`/tags/${id}`);
+    return data;
+  },
+  create: async (tag: { name: string; color?: string; description?: string }) => {
+    const { data } = await api.post<ApiResponse<Tag>>('/tags', tag);
+    return data;
+  },
+  update: async (id: string, tag: { name?: string; color?: string; description?: string }) => {
+    const { data } = await api.put<ApiResponse<Tag>>(`/tags/${id}`, tag);
+    return data;
+  },
+  delete: async (id: string) => {
+    const { data } = await api.delete<ApiResponse<void>>(`/tags/${id}`);
+    return data;
+  },
+  // Task-Tag operations
+  getTaskTags: async (taskId: string) => {
+    const { data } = await api.get<ApiResponse<Tag[]>>(`/tasks/${taskId}/tags`);
+    return data;
+  },
+  setTaskTags: async (taskId: string, tagIds: string[]) => {
+    const { data } = await api.put<ApiResponse<Tag[]>>(`/tasks/${taskId}/tags`, { tag_ids: tagIds });
+    return data;
+  },
+  addTagToTask: async (taskId: string, tagId: string) => {
+    const { data } = await api.post<ApiResponse<TaskTag>>(`/tasks/${taskId}/tags/${tagId}`);
+    return data;
+  },
+  removeTagFromTask: async (taskId: string, tagId: string) => {
+    const { data } = await api.delete<ApiResponse<void>>(`/tasks/${taskId}/tags/${tagId}`);
     return data;
   },
 };
