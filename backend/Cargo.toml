@@ -1,8 +1,8 @@
 [package]
-name = "pmo-backend"
+name = "percival-backend"
 version = "0.1.0"
 edition = "2021"
-description = "PMO (Project Management Office) Backend API"
+description = "Percival - Project Management Office Backend API"
 authors = ["okinn"]
 
 [dependencies]
@@ -37,3 +37,10 @@ async-trait = "0.1"
 
 [dev-dependencies]
 tokio-test = "0.4"
+
+# Pin crates that require edition2024 to versions compatible with stable Rust
+[dependencies.home]
+version = "=0.5.11"
+
+[dependencies.base64ct]
+version = "=1.7.3"

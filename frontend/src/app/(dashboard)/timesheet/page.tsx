@@ -313,7 +313,7 @@ export default function TimesheetPage() {
                       Working on: {tasks.find((t) => t.id === activeTimer.taskId)?.title}
                     </p>
                   </div>
-                  <Button onClick={handleStopTimer} variant="destructive">
+                  <Button onClick={handleStopTimer} variant="danger">
                     <Square className="h-4 w-4 mr-2" />
                     Stop
                   </Button>

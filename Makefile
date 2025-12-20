@@ -36,4 +36,4 @@ logs:
 
 # Database shell
 db-shell:
-	docker exec -it pmo-db psql -U postgres -d pmo_db
+	docker exec -it percival-db psql -U postgres -d percival_db

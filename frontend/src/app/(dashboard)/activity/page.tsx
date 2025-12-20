@@ -127,18 +127,19 @@ export default function ActivityPage() {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProject, setSelectedProject] = useState<string>('all');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
 
   useEffect(() => {
-    loadData();
+    loadProjects();
   }, []);
 
   useEffect(() => {
     loadActivities();
   }, [selectedProjectId]);
 
-  const loadData = async () => {
+  const loadProjects = async () => {
     try {
       const projectsRes = await projectsApi.list();
       if (projectsRes.data) setProjects(projectsRes.data);
@@ -148,8 +149,8 @@ export default function ActivityPage() {
   };
 
   const loadActivities = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const params = selectedProjectId ? { project_id: selectedProjectId } : undefined;
       const activitiesRes = await activityApi.list(params);
       if (activitiesRes.data) setActivities(activitiesRes.data);
@@ -159,6 +160,9 @@ export default function ActivityPage() {
       setLoading(false);
     }
   };
+
+  // Activities are already filtered by project_id from API
+  const filteredActivities = activities;
 
   // Group activities by date
   const groupedActivities = activities.reduce((groups, activity) => {
@@ -224,6 +228,7 @@ export default function ActivityPage() {
                 <div className="absolute top-full left-0 mt-1 w-64 bg-white border rounded-lg shadow-lg z-10">
                   <button
                     onClick={() => {
+                      setSelectedProject('all');
                       setSelectedProjectId(null);
                       setShowProjectDropdown(false);
                     }}
@@ -237,6 +242,7 @@ export default function ActivityPage() {
                     <button
                       key={project.id}
                       onClick={() => {
+                        setSelectedProject(project.name);
                         setSelectedProjectId(project.id);
                         setShowProjectDropdown(false);
                       }}

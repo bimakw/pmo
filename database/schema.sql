@@ -1,4 +1,5 @@
--- PMO Database Schema
+-- Percival Database Schema
+-- Project Management Office Application
 -- PostgreSQL
 
 -- Enable UUID extension

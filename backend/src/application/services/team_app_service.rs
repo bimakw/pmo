@@ -19,6 +19,21 @@ impl TeamAppService {
         self.team_repository.find_all().await
     }
 
+    /// List teams accessible by user (lead OR member)
+    pub async fn list_accessible_teams(&self, user_id: Uuid) -> Result<Vec<Team>, DomainError> {
+        self.team_repository.find_accessible_by_user(user_id).await
+    }
+
+    /// Check if user can access team (is lead OR member)
+    pub async fn can_user_access(&self, team_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        self.team_repository.can_user_access(team_id, user_id).await
+    }
+
+    /// Check if user is lead of team
+    pub async fn is_lead(&self, team_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        self.team_repository.is_lead(team_id, user_id).await
+    }
+
     pub async fn get_team(&self, id: Uuid) -> Result<Team, DomainError> {
         self.team_repository
             .find_by_id(id)

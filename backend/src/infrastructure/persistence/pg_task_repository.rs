@@ -107,6 +107,75 @@ impl TaskRepository for PgTaskRepository {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
+    async fn find_accessible_by_user(&self, user_id: Uuid) -> Result<Vec<Task>, DomainError> {
+        let rows = sqlx::query_as::<_, TaskRow>(
+            r#"
+            SELECT DISTINCT t.* FROM tasks t
+            INNER JOIN projects p ON t.project_id = p.id
+            LEFT JOIN project_members pm ON p.id = pm.project_id
+            WHERE p.owner_id = $1 OR pm.user_id = $1
+            ORDER BY t.created_at DESC
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    async fn can_user_access(&self, task_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        let result: Option<(i64,)> = sqlx::query_as(
+            r#"
+            SELECT 1 FROM tasks t
+            INNER JOIN projects p ON t.project_id = p.id
+            LEFT JOIN project_members pm ON p.id = pm.project_id
+            WHERE t.id = $1 AND (p.owner_id = $2 OR pm.user_id = $2)
+            LIMIT 1
+            "#,
+        )
+        .bind(task_id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.is_some())
+    }
+
+    async fn is_project_owner(&self, task_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        let result: Option<(i64,)> = sqlx::query_as(
+            r#"
+            SELECT 1 FROM tasks t
+            INNER JOIN projects p ON t.project_id = p.id
+            WHERE t.id = $1 AND p.owner_id = $2
+            LIMIT 1
+            "#,
+        )
+        .bind(task_id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.is_some())
+    }
+
+    async fn can_access_project(&self, project_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        let result: Option<(i64,)> = sqlx::query_as(
+            r#"
+            SELECT 1 FROM projects p
+            LEFT JOIN project_members pm ON p.id = pm.project_id
+            WHERE p.id = $1 AND (p.owner_id = $2 OR pm.user_id = $2)
+            LIMIT 1
+            "#,
+        )
+        .bind(project_id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.is_some())
+    }
+
     async fn create(&self, task: &Task) -> Result<Task, DomainError> {
         let row = sqlx::query_as::<_, TaskRow>(
             r#"

@@ -2,17 +2,17 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:16-alpine
-    container_name: pmo-db
+    container_name: percival-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pmo_db
+      POSTGRES_DB: percival_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     ports:
-      - "5432:5432"
+      - "12432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -24,15 +24,16 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: pmo-backend
+    container_name: percival-backend
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/pmo_db
+      DATABASE_URL: postgres://postgres:postgres@db:5432/percival_db
       SERVER_ADDR: 0.0.0.0:8080
       JWT_SECRET: change-this-secret-in-production
       JWT_EXPIRATION: 86400
       RUST_LOG: info
+      ALLOWED_ORIGINS: http://localhost:12300
     ports:
-      - "8080:8080"
+      - "12380:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -42,11 +43,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: pmo-frontend
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:12380/api/v1
+    container_name: percival-frontend
     ports:
-      - "3000:3000"
+      - "12300:3000"
     depends_on:
       - backend
 

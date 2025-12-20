@@ -5,7 +5,7 @@ mod task;
 mod team;
 mod user;
 
-pub use activity_log::{ActivityAction, ActivityLog, EntityType};
+pub use activity_log::{ActivityLog, ActivityLogWithDetails};
 pub use milestone::Milestone;
 pub use project::{Project, ProjectMember};
 pub use task::{Task, TaskComment};

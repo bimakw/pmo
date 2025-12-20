@@ -4,7 +4,6 @@ use axum::{
     Router,
 };
 use std::{sync::Arc, time::Duration};
-use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::cors::{AllowHeaders, AllowMethods, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -61,24 +60,6 @@ async fn main() {
     let team_service = Arc::new(TeamAppService::new(team_repository));
     let activity_service = Arc::new(ActivityAppService::new(activity_repository));
 
-    // Rate limiting configuration (100 requests per minute per IP)
-    let governor_conf = Arc::new(
-        GovernorConfigBuilder::default()
-            .per_second(2)
-            .burst_size(100)
-            .finish()
-            .unwrap(),
-    );
-
-    let governor_limiter = governor_conf.limiter().clone();
-    let rate_limit_layer = GovernorLayer::new(governor_conf);
-
-    // Start background task to clean up rate limiter
-    std::thread::spawn(move || loop {
-        std::thread::sleep(Duration::from_secs(60));
-        governor_limiter.retain_recent();
-    });
-
     // CORS configuration - restrict to allowed origins
     let cors = CorsLayer::new()
         .allow_origin(config.allowed_origins())
@@ -106,7 +87,6 @@ async fn main() {
             api_routes(auth_service, project_service, task_service, team_service, activity_service),
         )
         .layer(cors)
-        .layer(rate_limit_layer)
         .layer(TraceLayer::new_for_http());
 
     // Start server
@@ -178,10 +158,6 @@ fn api_routes(
     // Protected activity routes
     let activity_routes = Router::new()
         .route("/activities", get(activity_handler::list_activities))
-        .route(
-            "/projects/{id}/activities",
-            get(activity_handler::get_project_activities),
-        )
         .layer(middleware::from_fn(auth_middleware))
         .with_state(activity_service);
 

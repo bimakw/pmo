@@ -81,6 +81,51 @@ impl TeamRepository for PgTeamRepository {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
+    async fn find_accessible_by_user(&self, user_id: Uuid) -> Result<Vec<Team>, DomainError> {
+        let rows = sqlx::query_as::<_, TeamRow>(
+            r#"
+            SELECT DISTINCT t.* FROM teams t
+            LEFT JOIN team_members tm ON t.id = tm.team_id
+            WHERE t.lead_id = $1 OR tm.user_id = $1
+            ORDER BY t.created_at DESC
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    async fn can_user_access(&self, team_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        let result: Option<(i64,)> = sqlx::query_as(
+            r#"
+            SELECT 1 FROM teams t
+            LEFT JOIN team_members tm ON t.id = tm.team_id
+            WHERE t.id = $1 AND (t.lead_id = $2 OR tm.user_id = $2)
+            LIMIT 1
+            "#,
+        )
+        .bind(team_id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.is_some())
+    }
+
+    async fn is_lead(&self, team_id: Uuid, user_id: Uuid) -> Result<bool, DomainError> {
+        let result: Option<(i64,)> = sqlx::query_as(
+            "SELECT 1 FROM teams WHERE id = $1 AND lead_id = $2 LIMIT 1",
+        )
+        .bind(team_id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.is_some())
+    }
+
     async fn create(&self, team: &Team) -> Result<Team, DomainError> {
         let row = sqlx::query_as::<_, TeamRow>(
             r#"
