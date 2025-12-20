@@ -14,6 +14,7 @@ import {
   Clock,
   Tags,
   Bell,
+  CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
@@ -21,6 +22,7 @@ import { useAuthStore } from '@/store/auth';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Kanban', href: '/kanban', icon: Columns3 },
+  { name: 'Calendar', href: '/calendar', icon: CalendarDays },
   { name: 'Projects', href: '/projects', icon: FolderKanban },
   { name: 'Tasks', href: '/tasks', icon: CheckSquare },
   { name: 'Tags', href: '/tags', icon: Tags },
