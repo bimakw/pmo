@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { tasksApi, projectsApi } from '@/lib/api';
+import { tasksApi, projectsApi, timeLogsApi } from '@/lib/api';
 import type { Task, Project, TimeLog } from '@/types';
 import {
   Clock,
@@ -18,43 +18,6 @@ import {
   Calendar,
   Trash2,
 } from 'lucide-react';
-
-// Mock data for demonstration
-const mockTimeLogs: TimeLog[] = [
-  {
-    id: '1',
-    task_id: 't1',
-    user_id: 'u1',
-    task_name: 'Update homepage layout',
-    project_name: 'Website Redesign',
-    description: 'Worked on header section',
-    hours: 2.5,
-    date: new Date().toISOString().split('T')[0],
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    task_id: 't2',
-    user_id: 'u1',
-    task_name: 'Implement login screen',
-    project_name: 'Mobile App',
-    description: 'Form validation',
-    hours: 3,
-    date: new Date().toISOString().split('T')[0],
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    task_id: 't1',
-    user_id: 'u1',
-    task_name: 'Update homepage layout',
-    project_name: 'Website Redesign',
-    description: 'Footer redesign',
-    hours: 1.5,
-    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-  },
-];
 
 function getWeekDates(date: Date): Date[] {
   const week: Date[] = [];
@@ -83,9 +46,10 @@ interface TimeEntryModalProps {
   onSubmit: (entry: { task_id: string; hours: number; date: string; description: string }) => void;
   tasks: Task[];
   selectedDate: string;
+  isSubmitting: boolean;
 }
 
-function TimeEntryModal({ isOpen, onClose, onSubmit, tasks, selectedDate }: TimeEntryModalProps) {
+function TimeEntryModal({ isOpen, onClose, onSubmit, tasks, selectedDate, isSubmitting }: TimeEntryModalProps) {
   const [taskId, setTaskId] = useState('');
   const [hours, setHours] = useState('');
   const [description, setDescription] = useState('');
@@ -101,6 +65,9 @@ function TimeEntryModal({ isOpen, onClose, onSubmit, tasks, selectedDate }: Time
       date: selectedDate,
       description,
     });
+  };
+
+  const handleClose = () => {
     setTaskId('');
     setHours('');
     setDescription('');
@@ -119,6 +86,7 @@ function TimeEntryModal({ isOpen, onClose, onSubmit, tasks, selectedDate }: Time
               onChange={(e) => setTaskId(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={isSubmitting}
             >
               <option value="">Select task...</option>
               {tasks.map((task) => (
@@ -139,6 +107,7 @@ function TimeEntryModal({ isOpen, onClose, onSubmit, tasks, selectedDate }: Time
               onChange={(e) => setHours(e.target.value)}
               placeholder="e.g. 2.5"
               required
+              disabled={isSubmitting}
             />
           </div>
           <div>
@@ -147,13 +116,16 @@ function TimeEntryModal({ isOpen, onClose, onSubmit, tasks, selectedDate }: Time
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What did you work on?"
+              disabled={isSubmitting}
             />
           </div>
           <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save'}
+            </Button>
           </div>
         </form>
       </div>
@@ -162,10 +134,11 @@ function TimeEntryModal({ isOpen, onClose, onSubmit, tasks, selectedDate }: Time
 }
 
 export default function TimesheetPage() {
-  const [timeLogs, setTimeLogs] = useState<TimeLog[]>(mockTimeLogs);
+  const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
@@ -174,9 +147,44 @@ export default function TimesheetPage() {
 
   const weekDates = getWeekDates(currentWeek);
 
+  const loadTimeLogs = useCallback(async () => {
+    try {
+      const startDate = formatDate(weekDates[0]);
+      const endDate = formatDate(weekDates[6]);
+      const response = await timeLogsApi.list({ start_date: startDate, end_date: endDate });
+      if (response.data) {
+        setTimeLogs(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load time logs:', error);
+    }
+  }, [weekDates]);
+
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [tasksRes, projectsRes] = await Promise.all([
+          tasksApi.list(),
+          projectsApi.list(),
+        ]);
+
+        if (tasksRes.data) setTasks(tasksRes.data);
+        if (projectsRes.data) setProjects(projectsRes.data);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      loadTimeLogs();
+    }
+  }, [loading, currentWeek, loadTimeLogs]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -187,22 +195,6 @@ export default function TimesheetPage() {
     }
     return () => clearInterval(interval);
   }, [activeTimer]);
-
-  const loadData = async () => {
-    try {
-      const [tasksRes, projectsRes] = await Promise.all([
-        tasksApi.list(),
-        projectsApi.list(),
-      ]);
-
-      if (tasksRes.data) setTasks(tasksRes.data);
-      if (projectsRes.data) setProjects(projectsRes.data);
-    } catch (error) {
-      console.error('Failed to load data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handlePrevWeek = () => {
     const newDate = new Date(currentWeek);
@@ -216,24 +208,38 @@ export default function TimesheetPage() {
     setCurrentWeek(newDate);
   };
 
-  const handleAddEntry = (entry: { task_id: string; hours: number; date: string; description: string }) => {
-    const task = tasks.find((t) => t.id === entry.task_id);
-    const newLog: TimeLog = {
-      id: Date.now().toString(),
-      task_id: entry.task_id,
-      user_id: 'current',
-      task_name: task?.title || 'Unknown Task',
-      project_name: projects.find((p) => p.id === task?.project_id)?.name,
-      description: entry.description,
-      hours: entry.hours,
-      date: entry.date,
-      created_at: new Date().toISOString(),
-    };
-    setTimeLogs([...timeLogs, newLog]);
+  const handleAddEntry = async (entry: { task_id: string; hours: number; date: string; description: string }) => {
+    setIsSubmitting(true);
+    try {
+      const response = await timeLogsApi.create({
+        task_id: entry.task_id,
+        hours: entry.hours,
+        date: entry.date,
+        description: entry.description || undefined,
+      });
+
+      if (response.data) {
+        setTimeLogs([response.data, ...timeLogs]);
+        setIsModalOpen(false);
+      }
+    } catch (error) {
+      console.error('Failed to create time log:', error);
+      alert('Failed to save time entry');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteEntry = (id: string) => {
-    setTimeLogs(timeLogs.filter((log) => log.id !== id));
+  const handleDeleteEntry = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this entry?')) return;
+
+    try {
+      await timeLogsApi.delete(id);
+      setTimeLogs(timeLogs.filter((log) => log.id !== id));
+    } catch (error) {
+      console.error('Failed to delete time log:', error);
+      alert('Failed to delete time entry');
+    }
   };
 
   const handleStartTimer = (taskId: string) => {
@@ -241,12 +247,12 @@ export default function TimesheetPage() {
     setTimerElapsed(0);
   };
 
-  const handleStopTimer = () => {
+  const handleStopTimer = async () => {
     if (!activeTimer) return;
 
     const hours = Math.round((timerElapsed / 3600) * 4) / 4; // Round to nearest 0.25
     if (hours >= 0.25) {
-      handleAddEntry({
+      await handleAddEntry({
         task_id: activeTimer.taskId,
         hours,
         date: formatDate(new Date()),
@@ -465,6 +471,7 @@ export default function TimesheetPage() {
         onSubmit={handleAddEntry}
         tasks={tasks}
         selectedDate={selectedDate}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

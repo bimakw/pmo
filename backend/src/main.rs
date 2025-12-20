@@ -14,13 +14,13 @@ mod infrastructure;
 mod presentation;
 mod shared;
 
-use application::services::{ActivityAppService, AuthAppService, ProjectAppService, TaskAppService, TeamAppService};
+use application::services::{ActivityAppService, AuthAppService, ProjectAppService, TaskAppService, TeamAppService, TimeLogAppService};
 use infrastructure::{
     config::AppConfig,
     database,
-    persistence::{PgActivityLogRepository, PgProjectRepository, PgTaskRepository, PgTeamRepository, PgUserRepository},
+    persistence::{PgActivityLogRepository, PgProjectRepository, PgTaskRepository, PgTeamRepository, PgTimeLogRepository, PgUserRepository},
 };
-use presentation::handlers::{activity_handler, auth_handler, project_handler, task_handler, team_handler};
+use presentation::handlers::{activity_handler, auth_handler, project_handler, task_handler, team_handler, time_log_handler};
 use presentation::middleware::auth_middleware;
 
 #[tokio::main]
@@ -48,6 +48,7 @@ async fn main() {
     let task_repository = Arc::new(PgTaskRepository::new(pool.clone()));
     let team_repository = Arc::new(PgTeamRepository::new(pool.clone()));
     let activity_repository = Arc::new(PgActivityLogRepository::new(pool.clone()));
+    let time_log_repository = Arc::new(PgTimeLogRepository::new(pool.clone()));
 
     // Create application services
     let auth_service = Arc::new(AuthAppService::new(
@@ -59,6 +60,7 @@ async fn main() {
     let task_service = Arc::new(TaskAppService::new(task_repository));
     let team_service = Arc::new(TeamAppService::new(team_repository));
     let activity_service = Arc::new(ActivityAppService::new(activity_repository));
+    let time_log_service = Arc::new(TimeLogAppService::new(time_log_repository));
 
     // CORS configuration - restrict to allowed origins
     let cors = CorsLayer::new()
@@ -84,7 +86,7 @@ async fn main() {
         .route("/health", get(health_check))
         .nest(
             "/api/v1",
-            api_routes(auth_service, project_service, task_service, team_service, activity_service),
+            api_routes(auth_service, project_service, task_service, team_service, activity_service, time_log_service),
         )
         .layer(cors)
         .layer(TraceLayer::new_for_http());
@@ -108,6 +110,7 @@ fn api_routes(
     task_service: Arc<TaskAppService>,
     team_service: Arc<TeamAppService>,
     activity_service: Arc<ActivityAppService>,
+    time_log_service: Arc<TimeLogAppService>,
 ) -> Router {
     // Public auth routes (no authentication required)
     let public_auth_routes = Router::new()
@@ -161,10 +164,23 @@ fn api_routes(
         .layer(middleware::from_fn(auth_middleware))
         .with_state(activity_service);
 
+    // Protected time log routes
+    let time_log_routes = Router::new()
+        .route("/time-logs", get(time_log_handler::list_my_time_logs))
+        .route("/time-logs", post(time_log_handler::create_time_log))
+        .route("/time-logs/{id}", get(time_log_handler::get_time_log))
+        .route("/time-logs/{id}", put(time_log_handler::update_time_log))
+        .route("/time-logs/{id}", delete(time_log_handler::delete_time_log))
+        .route("/tasks/{task_id}/time-logs", get(time_log_handler::list_task_time_logs))
+        .route("/users/{user_id}/time-logs", get(time_log_handler::list_user_time_logs))
+        .layer(middleware::from_fn(auth_middleware))
+        .with_state(time_log_service);
+
     Router::new()
         .merge(public_auth_routes)
         .merge(project_routes)
         .merge(task_routes)
         .merge(team_routes)
         .merge(activity_routes)
+        .merge(time_log_routes)
 }
