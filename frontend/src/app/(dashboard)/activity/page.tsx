@@ -165,7 +165,7 @@ export default function ActivityPage() {
   const filteredActivities = activities;
 
   // Group activities by date
-  const groupedActivities = filteredActivities.reduce((groups, activity) => {
+  const groupedActivities = activities.reduce((groups, activity) => {
     const date = new Date(activity.created_at);
     const today = new Date();
     const yesterday = new Date(today);
@@ -217,9 +217,9 @@ export default function ActivityPage() {
               >
                 <Filter className="h-4 w-4" />
                 <span className="text-sm">
-                  {selectedProject === 'all'
+                  {selectedProjectId === null
                     ? 'All Projects'
-                    : selectedProject}
+                    : projects.find(p => p.id === selectedProjectId)?.name || 'All Projects'}
                 </span>
                 <ChevronDown className="h-4 w-4" />
               </button>
@@ -233,7 +233,7 @@ export default function ActivityPage() {
                       setShowProjectDropdown(false);
                     }}
                     className={`w-full text-left px-4 py-2 hover:bg-gray-50 text-sm ${
-                      selectedProject === 'all' ? 'bg-blue-50 text-blue-600' : ''
+                      selectedProjectId === null ? 'bg-blue-50 text-blue-600' : ''
                     }`}
                   >
                     All Projects
