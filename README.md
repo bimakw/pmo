@@ -1,6 +1,8 @@
 <div align="center">
 
-# ⚔️ Percival
+<img src="logo.svg" alt="Percival Logo" width="120" height="120">
+
+# Percival
 
 **Your knight in project management**
 
