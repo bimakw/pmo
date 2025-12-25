@@ -14,6 +14,7 @@ pub enum DomainError {
     Unauthorized(String),
     Forbidden(String),
     InternalError(String),
+    DatabaseError(String),
 }
 
 impl fmt::Display for DomainError {
@@ -25,6 +26,7 @@ impl fmt::Display for DomainError {
             Self::Unauthorized(msg) => write!(f, "Unauthorized: {}", msg),
             Self::Forbidden(msg) => write!(f, "Forbidden: {}", msg),
             Self::InternalError(msg) => write!(f, "Internal error: {}", msg),
+            Self::DatabaseError(msg) => write!(f, "Database error: {}", msg),
         }
     }
 }
@@ -53,6 +55,9 @@ impl IntoResponse for DomainError {
             DomainError::Forbidden(msg) => (StatusCode::FORBIDDEN, "FORBIDDEN", msg.clone()),
             DomainError::InternalError(msg) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", msg.clone())
+            }
+            DomainError::DatabaseError(msg) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "DATABASE_ERROR", msg.clone())
             }
         };
 

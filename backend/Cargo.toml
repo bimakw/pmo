@@ -5,6 +5,13 @@ edition = "2021"
 description = "Percival - Project Management Office Backend API"
 authors = ["okinn"]
 
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "percival-backend"
+path = "src/main.rs"
+
 [dependencies]
 # Web Framework
 axum = { version = "0.8", features = ["macros", "multipart"] }

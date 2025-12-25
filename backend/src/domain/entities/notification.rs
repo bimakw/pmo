@@ -12,6 +12,7 @@ pub enum NotificationType {
     ProjectUpdated,
     CommentAdded,
     Mention,
+    System,
 }
 
 impl std::fmt::Display for NotificationType {
@@ -24,6 +25,25 @@ impl std::fmt::Display for NotificationType {
             NotificationType::ProjectUpdated => write!(f, "project_updated"),
             NotificationType::CommentAdded => write!(f, "comment_added"),
             NotificationType::Mention => write!(f, "mention"),
+            NotificationType::System => write!(f, "system"),
+        }
+    }
+}
+
+impl std::str::FromStr for NotificationType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "task_assigned" => Ok(NotificationType::TaskAssigned),
+            "task_updated" => Ok(NotificationType::TaskUpdated),
+            "task_completed" => Ok(NotificationType::TaskCompleted),
+            "task_due_soon" => Ok(NotificationType::TaskDueSoon),
+            "project_updated" => Ok(NotificationType::ProjectUpdated),
+            "comment_added" => Ok(NotificationType::CommentAdded),
+            "mention" => Ok(NotificationType::Mention),
+            "system" => Ok(NotificationType::System),
+            _ => Err(()),
         }
     }
 }
